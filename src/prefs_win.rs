@@ -3,6 +3,7 @@ use crate::main_win::MainState;
 use crate::pref_storage::*;
 use crate::rpc::Core;
 use gettextrs::gettext;
+use gio::{ActionMapExt, SimpleAction};
 use gtk::*;
 use log::{debug, error, trace};
 use pango::*;
@@ -23,24 +24,13 @@ impl PrefsWin {
     ) -> Rc<RefCell<Self>> {
         const SRC: &str = include_str!("ui/prefs_win.glade");
         let builder = Builder::new_from_string(SRC);
+        let application = parent.get_application().unwrap();
 
         let window: Window = builder.get_object("prefs_win").unwrap();
         let font_chooser_widget: FontChooserWidget =
             builder.get_object("font_chooser_widget").unwrap();
         let theme_combo_box: ComboBoxText = builder.get_object("theme_combo_box").unwrap();
-        let tab_stops_checkbutton: ToggleButton =
-            builder.get_object("tab_stops_checkbutton").unwrap();
-        let scroll_past_end_checkbutton: ToggleButton =
-            builder.get_object("scroll_past_end_checkbutton").unwrap();
-        let word_wrap_checkbutton: ToggleButton =
-            builder.get_object("word_wrap_checkbutton").unwrap();
-        let draw_trailing_spaces_checkbutton: ToggleButton = builder
-            .get_object("draw_trailing_spaces_checkbutton")
-            .unwrap();
-        let margin_checkbutton: ToggleButton = builder.get_object("margin_checkbutton").unwrap();
         let margin_spinbutton: SpinButton = builder.get_object("margin_spinbutton").unwrap();
-        let highlight_line_checkbutton: ToggleButton =
-            builder.get_object("highlight_line_checkbutton").unwrap();
         let tab_size_spinbutton: SpinButton = builder.get_object("tab_size_spinbutton").unwrap();
 
         let xi_config = &main_state.borrow().config;
@@ -103,74 +93,115 @@ impl PrefsWin {
         }));
 
         {
-            {
-                scroll_past_end_checkbutton
-                    .set_active(main_state.borrow().config.config.scroll_past_end);
-            }
+            let scroll_past_end_checkbutton = SimpleAction::new_stateful(
+                "scroll_past_end",
+                None,
+                &main_state
+                    .borrow()
+                    .config
+                    .config
+                    .scroll_past_end
+                    .to_variant(),
+            );
 
-            scroll_past_end_checkbutton.connect_toggled(clone!(main_state => move |toggle_btn| {
-                let value = toggle_btn.get_active();;
-                debug!("{}: {}", gettext("Scrolling past end"), value);
-                main_state.borrow_mut().config.config.scroll_past_end = value;
-                main_state.borrow().config.save()
-                    .map_err(|e| error!("{}", e.to_string()))
-                    .unwrap();
-            }));
-        }
-
-        {
-            {
-                word_wrap_checkbutton.set_active(main_state.borrow().config.config.word_wrap);
-            }
-
-            word_wrap_checkbutton.connect_toggled(clone!(main_state => move |toggle_btn| {
-                let value = toggle_btn.get_active();
-                debug!("{}: {}", gettext("Word wrapping"), value);
-                main_state.borrow_mut().config.config.word_wrap = value;
-                main_state.borrow().config.save()
-                    .map_err(|e| error!("{}", e.to_string()))
-                    .unwrap();
-            }));
-        }
-
-        {
-            {
-                tab_stops_checkbutton.set_active(main_state.borrow().config.config.use_tab_stops);
-            }
-
-            tab_stops_checkbutton.connect_toggled(clone!(main_state => move |toggle_btn| {
-                let value = toggle_btn.get_active();
-                debug!("{}: {}", gettext("Tab stops"), value);
-                main_state.borrow_mut().config.config.use_tab_stops = value;
-                main_state.borrow().config.save()
-                    .map_err(|e| error!("{}", e.to_string()))
-                    .unwrap();
-            }));
-        }
-
-        {
-            draw_trailing_spaces_checkbutton.set_active(get_draw_trailing_spaces_schema());
-
-            draw_trailing_spaces_checkbutton.connect_toggled(move |toggle_btn| {
-                let value = toggle_btn.get_active();
-                set_draw_trailing_spaces_schema(value);
-            });
-        }
-
-        {
-            margin_checkbutton.set_active(get_draw_right_margin());
-
-            margin_checkbutton.connect_toggled(
-                clone!(edit_view, margin_spinbutton => move |toggle_btn| {
-                    let value = toggle_btn.get_active();
-                    debug!("{}: {}", gettext("Right hand margin"), value);
-                    set_draw_right_margin(value);
-                    if let Some(ev) = edit_view.clone() {
-                        ev.borrow().view_item.edit_area.queue_draw();
+            scroll_past_end_checkbutton.connect_change_state(
+                clone!(main_state => move |action, value| {
+                    if let Some(value) = value.as_ref() {
+                        action.set_state(value);
+                        let value: bool = value.get().unwrap();
+                        debug!("{}: {}", gettext("Scrolling past end"), value);
+                        main_state.borrow_mut().config.config.scroll_past_end = value;
+                        main_state.borrow().config.save()
+                            .map_err(|e| error!("{}", e.to_string()))
+                            .unwrap();
                     }
-                    margin_spinbutton.set_sensitive(value);
                 }),
             );
+            application.add_action(&scroll_past_end_checkbutton);
+            scroll_past_end_checkbutton.set_enabled(true);
+        }
+
+        {
+            let word_wrap_checkbutton = SimpleAction::new_stateful(
+                "word_wrap",
+                None,
+                &main_state.borrow().config.config.word_wrap.to_variant(),
+            );
+
+            word_wrap_checkbutton.connect_change_state(clone!(main_state => move |action,value| {
+                if let Some(value) = value.as_ref() {
+                    action.set_state(value);
+                    let value: bool = value.get().unwrap();
+                    debug!("{}: {}", gettext("Word wrapping"), value);
+                    main_state.borrow_mut().config.config.word_wrap = value;
+                    main_state.borrow().config.save()
+                        .map_err(|e| error!("{}", e.to_string()))
+                        .unwrap();
+                }
+            }));
+            application.add_action(&word_wrap_checkbutton);
+        }
+
+        {
+            let tab_stops_checkbutton = SimpleAction::new_stateful(
+                "tap_stops",
+                None,
+                &main_state.borrow().config.config.use_tab_stops.to_variant(),
+            );
+
+            tab_stops_checkbutton.connect_change_state(clone!(main_state => move |action,value| {
+                if let Some(value) = value.as_ref() {
+                    action.set_state(value);
+                    let value: bool = value.get().unwrap();
+                    debug!("{}: {}", gettext("Tab stops"), value);
+                    main_state.borrow_mut().config.config.use_tab_stops = value;
+                    main_state.borrow().config.save()
+                        .map_err(|e| error!("{}", e.to_string()))
+                        .unwrap();
+                }
+            }));
+            application.add_action(&tab_stops_checkbutton);
+        }
+
+        {
+            let draw_trailing_spaces_checkbutton = SimpleAction::new_stateful(
+                "draw_trailing_spaces",
+                None,
+                &get_draw_trailing_spaces_schema().to_variant(),
+            );
+
+            draw_trailing_spaces_checkbutton.connect_change_state(move |action, value| {
+                if let Some(value) = value.as_ref() {
+                    action.set_state(value);
+                    let value: bool = value.get().unwrap();
+                    set_draw_trailing_spaces_schema(value);
+                }
+            });
+            application.add_action(&draw_trailing_spaces_checkbutton);
+        }
+
+        {
+            let margin_checkbutton = SimpleAction::new_stateful(
+                "display_margin",
+                None,
+                &get_draw_right_margin().to_variant(),
+            );
+
+            margin_checkbutton.connect_change_state(
+                clone!(edit_view, margin_spinbutton => move |action, value| {
+                     if let Some(value) = value.as_ref() {
+                        action.set_state(value);
+                        let value: bool = value.get().unwrap();
+                        debug!("{}: {}", gettext("Right hand margin"), value);
+                        set_draw_right_margin(value);
+                        if let Some(ev) = edit_view.clone() {
+                            ev.borrow().view_item.edit_area.queue_draw();
+                        }
+                        margin_spinbutton.set_sensitive(value);
+                    }
+                }),
+            );
+            application.add_action(&margin_checkbutton);
         }
 
         {
@@ -206,15 +237,25 @@ impl PrefsWin {
         }
 
         {
-            highlight_line_checkbutton.set_active(get_highlight_line());
+            let highlight_line_checkbutton = SimpleAction::new_stateful(
+                "highlight_line",
+                None,
+                &get_highlight_line().to_variant(),
+            );
 
-            highlight_line_checkbutton.connect_toggled(clone!(edit_view => move |toggle_btn| {
-                let value = toggle_btn.get_active();
-                set_highlight_line(value);
-                if let Some(ev) = edit_view.clone() {
-                    ev.borrow().view_item.edit_area.queue_draw();
-                }
-            }));
+            highlight_line_checkbutton.connect_change_state(
+                clone!(edit_view => move |action, value| {
+                    if let Some(value) = value.as_ref() {
+                        action.set_state(value);
+                        let value: bool = value.get().unwrap();
+                        set_highlight_line(value);
+                        if let Some(ev) = edit_view.clone() {
+                            ev.borrow().view_item.edit_area.queue_draw();
+                        }
+                     }
+                }),
+            );
+            application.add_action(&highlight_line_checkbutton);
         }
 
         let prefs_win = Rc::new(RefCell::new(Self {

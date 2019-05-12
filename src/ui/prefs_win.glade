@@ -169,6 +169,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="action_name">app.tab_stops</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -184,6 +185,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="action_name">app.scroll_past_end</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -199,6 +201,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="action_name">app.word_wrap</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -214,6 +217,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="action_name">app.draw_trailing_spaces</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
@@ -232,6 +236,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
+                    <property name="action_name">app.display_margin</property>
                     <property name="draw_indicator">True</property>
                   </object>
                   <packing>
@@ -270,6 +275,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">False</property>
+                <property name="action_name">app.highlight_line</property>
                 <property name="draw_indicator">True</property>
               </object>
               <packing>
