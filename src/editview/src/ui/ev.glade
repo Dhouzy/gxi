@@ -76,9 +76,11 @@
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
-      <object class="GtkDrawingArea" id="line_count">
+      <object class="GtkLayout" id="line_count">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="hadjustment">hadj</property>
+        <property name="vadjustment">hadj</property>
       </object>
       <packing>
         <property name="expand">False</property>
@@ -92,29 +94,30 @@
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkDrawingArea" id="edit_area">
+          <object class="GtkScrolledWindow" id="scrolled_window">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="has_focus">True</property>
             <property name="is_focus">True</property>
+            <property name="can_default">True</property>
+            <property name="has_default">True</property>
+            <property name="events">GDK_BUTTON_PRESS_MASK | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_STRUCTURE_MASK | GDK_SCROLL_MASK | GDK_TOUCH_MASK | GDK_SMOOTH_SCROLL_MASK</property>
+            <property name="hadjustment">hadj</property>
+            <property name="vadjustment">vadj</property>
+            <property name="shadow_type">in</property>
+            <child>
+              <object class="GtkLayout" id="edit_area">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="hadjustment">hadj</property>
+                <property name="vadjustment">vadj</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">0</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkScrollbar" id="horiz_bar">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="adjustment">hadj</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -190,19 +193,6 @@
         <property name="expand">True</property>
         <property name="fill">True</property>
         <property name="position">1</property>
-      </packing>
-    </child>
-    <child>
-      <object class="GtkScrollbar" id="vert_bar">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="adjustment">vadj</property>
-      </object>
-      <packing>
-        <property name="expand">False</property>
-        <property name="fill">False</property>
-        <property name="position">2</property>
       </packing>
     </child>
   </object>
