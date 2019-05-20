@@ -107,7 +107,6 @@ impl MainWin {
         }
 
         let notebook: Notebook = builder.get_object("notebook").unwrap();
-        let syntax_combo_box: ComboBoxText = builder.get_object("syntax_combo_box").unwrap();
 
         let theme_name = properties.gschema.get_key("theme-name");
         debug!("{}: {}", gettext("Theme name"), &theme_name);
@@ -179,29 +178,6 @@ impl MainWin {
             }
         }));
 
-        {
-            let main_win = main_win.clone();
-
-            syntax_combo_box.append_text(&gettext("Plain Text"));
-            syntax_combo_box.set_active(Some(0));
-
-            syntax_combo_box.connect_changed(move |cb| {
-                if let Some(lang) = cb.get_active_text() {
-                    let lang = lang.to_string();
-                    // xi-editor doesn't know about the translations
-                    let lang = if lang == gettext("Plain Text") {
-                        "Plain Text".to_string()
-                    } else {
-                        lang
-                    };
-                    if let Some(ev) = main_win.borrow().get_current_edit_view() {
-                        let core = &main_win.borrow().core;
-                        trace!("{} {}", gettext("Setting language to"), &lang);
-                        Self::set_language(core, &ev.borrow().view_id, &lang);
-                    }
-                }
-            });
-        }
         {
             let open_action = SimpleAction::new("open", None);
             open_action.connect_activate(enclose!((main_win) move |_,_| {
@@ -633,11 +609,6 @@ impl MainWin {
         }
     }
 
-    pub fn set_language(core: &Core, view_id: &str, lang: &str) {
-        debug!("{} '{:?}'", gettext("Changing language to"), lang);
-        core.set_language(&view_id, &lang);
-    }
-
     /// Display the FileChooserNative for opening, send the result to the Xi core.
     /// Don't use FileChooserDialog here, it doesn't work for Flatpaks.
     /// This may call the GTK main loop.  There must not be any RefCell borrows out while this
@@ -812,18 +783,6 @@ impl MainWin {
         let mut old_ev = None;
         {
             let mut win = main_win.borrow_mut();
-
-            // Add all available langs to the syntax_combo_box for the user to select it. We're doing
-            // it here because we can be sure that xi-editor has sent available_languages by now.
-            let syntax_combo_box: ComboBoxText =
-                win.builder.get_object("syntax_combo_box").unwrap();
-
-            win.state
-                .borrow()
-                .avail_languages
-                .iter()
-                .filter(|l| l != &&"Plain Text".to_string())
-                .for_each(|lang| syntax_combo_box.append_text(lang));
 
             if let Some(view_id) = value.as_str() {
                 let position = if let Some(curr_ev) = win.get_current_edit_view() {
